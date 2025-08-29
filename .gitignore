@@ -1,0 +1,25 @@
+# Build outputs
+build*/
+dist/
+*.bin
+*.elf
+*.map
+
+# ESP-IDF specific
+managed_components/
+sdkconfig.old
+dependencies.lock
+
+# IDE files
+.vscode/settings.json
+.vscode/c_cpp_properties.json
+.clangd
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~

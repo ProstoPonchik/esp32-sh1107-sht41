@@ -32,4 +32,8 @@ menu "Example Configuration"
             default 32 if EXAMPLE_SSD1306_HEIGHT_32
     endif
 
+    config LV_FONT_JB_14
+        bool "JetBrains 14"
+        default y
+
 endmenu

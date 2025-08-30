@@ -90,25 +90,39 @@ void example_lvgl_demo_ui(lv_disp_t *disp)
     lv_obj_set_style_margin_all(scr, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(scr, 0, LV_PART_MAIN);
     
-    /* Create temperature label */
-    temp_label = lv_label_create(scr);
+    /* Centered container for Sensor/Temp/Hum */
+    lv_obj_t *panel = lv_obj_create(scr);
+    lv_obj_set_size(panel, 128, LV_SIZE_CONTENT);
+    lv_obj_set_style_border_width(panel, 0, 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_pad_all(panel, 0, 0);
+    lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(panel, 6, 0);
+    lv_obj_center(panel);
+
+    /* Sensor label */
+    lv_obj_t *sensor_label = lv_label_create(panel);
+    lv_label_set_text(sensor_label, "Sensor: SHT41");
+    lv_obj_set_width(sensor_label, 128);
+    lv_obj_set_style_text_align(sensor_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(sensor_label, &lv_font_jb_14, 0);
+    
+    /* Temperature label */
+    temp_label = lv_label_create(panel);
     lv_label_set_text(temp_label, "Temp: --.-°C");
-    lv_obj_set_pos(temp_label, 0, 0);
     lv_obj_set_width(temp_label, 128);
+    lv_obj_set_style_text_align(temp_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(temp_label, &lv_font_jb_14, 0);
     
-    /* Create humidity label */
-    humidity_label = lv_label_create(scr);
+    /* Humidity label */
+    humidity_label = lv_label_create(panel);
     lv_label_set_text(humidity_label, "Hum: --.-%");
-    lv_obj_set_pos(humidity_label, 0, 20);
     lv_obj_set_width(humidity_label, 128);
+    lv_obj_set_style_text_align(humidity_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(humidity_label, &lv_font_jb_14, 0);
+
     
-    // /* Create pressure label */
-    // pressure_label = lv_label_create(scr);
-    // lv_label_set_text(pressure_label, "Press: ----hPa");
-    // lv_obj_set_pos(pressure_label, 0, 40);
-    // lv_obj_set_width(pressure_label, 128);
-    
-    /* Remove padding from all labels */
+    /* Remove padding from labels */
     lv_obj_set_style_pad_all(temp_label, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(humidity_label, 0, LV_PART_MAIN);
     // lv_obj_set_style_pad_all(pressure_label, 0, LV_PART_MAIN);

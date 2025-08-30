@@ -21,7 +21,7 @@ extern void example_lvgl_demo_ui(lv_disp_t *disp);
 
 static esp_err_t init_i2c_bus(i2c_master_bus_handle_t *i2c_bus, i2c_port_t i2c_port, gpio_num_t sda_pin, gpio_num_t scl_pin);
 static esp_err_t init_i2c_display(i2c_master_bus_handle_t i2c_bus);
-static esp_err_t init_sh1107_panel(esp_lcd_panel_sh1107_config_t *sh1107_config);
+static esp_err_t init_sh1107_panel();
 static void sensor_data_task(void *pvParameters);
 
 static i2c_master_bus_handle_t i2c_bus_0;
@@ -47,10 +47,10 @@ void app_main(void)
     ESP_ERROR_CHECK(init_handle_sht41(&sht41_dev_handle, i2c_bus_0, SHT41_I2C_ADDR, I2C_CLK_HZ));
 
     /* Configure SH1107 with proper display offset for 128x128 */
-    esp_lcd_panel_sh1107_config_t sh1107_config = {
-        .display_offset = 0x00,  /* 0x00 for 128x128 displays, 0x60 default */
-    };
-    ESP_ERROR_CHECK(init_sh1107_panel(&sh1107_config));
+    // esp_lcd_panel_sh1107_config_t sh1107_config = {
+    //     .display_offset = 0x00,  /* 0x00 for 128x128 displays, 0x60 default */
+    // };
+    ESP_ERROR_CHECK(init_sh1107_panel());
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(sh1107_panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(sh1107_panel_handle));
@@ -158,14 +158,12 @@ esp_err_t init_i2c_display(i2c_master_bus_handle_t i2c_bus)
 }
 
 
-esp_err_t init_sh1107_panel(esp_lcd_panel_sh1107_config_t *sh1107_config)
+esp_err_t init_sh1107_panel()
 {
     esp_lcd_panel_dev_config_t panel_config = {
         .bits_per_pixel = 1,
         .reset_gpio_num = SH1107_RST_PIN,
     };
-
-    panel_config.vendor_config = sh1107_config;
 
     return esp_lcd_new_panel_sh1107(sh1107_io_handle, &panel_config, &sh1107_panel_handle);
 }

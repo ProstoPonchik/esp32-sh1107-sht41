@@ -14,7 +14,11 @@ esp_err_t init_handle_sht41(i2c_master_dev_handle_t *dev_handle, i2c_master_bus_
 /*
  * Read temperature and humidity from the SHT41 sensor
  */
-esp_err_t sht41_read(float *t_c, float *rh, i2c_master_dev_handle_t sht41_dev_handle);
+esp_err_t sht41_tmp_hmd_read(float *t_c, float *rh, i2c_master_dev_handle_t sht41_dev_handle);
+
+esp_err_t sht41_soft_reset(i2c_master_dev_handle_t sht41_dev_handle);
+
+esp_err_t sht41_serial_number(i2c_master_dev_handle_t sht41_dev_handle, uint32_t *serial_number);
 
 #ifdef __cplusplus
 }

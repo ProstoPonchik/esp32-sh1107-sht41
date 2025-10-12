@@ -124,82 +124,101 @@ static esp_err_t panel_sh1106_reset(esp_lcd_panel_t *panel)
     return ESP_OK;
 }
 
+// РЕКОМЕНДОВАНА ПОСЛІДОВНІСТЬ (SSD1306-style init + page addressing)
 static const uint8_t vendor_specific_init[] = {
-    // 0xAE,   /* turn off OLED display */
-
-    // 0xdc,   /* set display start line */
-    // 0x00,
-
-    // 0x81,   /* contrast control */
-    // 0x2f,   /* 128 */
-
-    // 0x20,   /* Set Memory addressing mode (0x20/0x21) */
-
-    // 0xA0,   /* Non-flipped horizontal */
-    // 0xC7,   /* Non-flipped vertical */
-
-    // 0xa8,   /* multiplex ratio */
-    // 0x7f,   /* duty = 1/64 */
-
-    // 0xd3,   /* set display offset */
-    // 0x00,
-
-    // 0xd5,   /* set osc division */
-    // 0x51,
-
-    // 0xd9,   /* set pre-charge period */
-    // 0x22,
-
-    // 0xdb,   /* set vcomh */
-    // 0x35,
-
-    // 0xB0,   /* Set page address */
-
-    // 0xDA,   /* Set com pins */
-    // 0x12,
-
-    // 0xa4,   /* output ram to display */
-
-    // 0xa6,   /* normal / inverted colors */
-
-    // 0xFF, //END
-    
-    0xAE,               /* display OFF */
-    0xD5, 0x80,         /* clock divide/osc freq */
-    0xA8, 0x3F,         /* multiplex ratio: 1/64 */
-    0xD3, 0x00,         /* display offset */
-    0x40,               /* start line = 0 */
-    0xAD, 0x8B,         /* DC-DC on (charge pump) */
-    0xA1,               /* segment remap (mirror X off is A0, remap is A1) */
-    0xC8,               /* COM scan dir remap (C0 normal, C8 remap) */
-    0xDA, 0x12,         /* COM pins hw cfg */
-    0x81, 0x7F,         /* contrast */
-    0xD9, 0x22,         /* pre-charge */
-    0xDB, 0x35,         /* VCOM detect */
-    0xA4,               /* resume to RAM content display */
-    0xA6,               /* normal display (A7 inverse) */
-    0x20, 0x00,         /* horizontal addressing mode (compat) */
-    0xB0,               /* set page to 0 (we change before drawing) */
-    0xFF,               /* END */
+    0xAE,             // display OFF
+    0xD5, 0x80,       // clock divide + oscillator
+    0xA8, 0x3F,       // multiplex 1/64
+    0xD3, 0x00,       // display offset 0
+    0x40,             // start line 0
+    0x8D, 0x14,       // charge pump ON (SSD1306)
+    0x20, 0x02,       // Memory Addressing Mode = Page
+    0xA1,             // segment remap
+    0xC8,             // COM scan dir
+    0xDA, 0x12,       // COM pins
+    0x81, 0xCF,       // contrast (можеш лишити 0x7F, якщо занадто яскраво)
+    0xD9, 0xF1,       // precharge (або 0x22 — м’якше)
+    0xDB, 0x40,       // VCOMH
+    0x2E,             // deactivate scroll
+    0xA4,             // resume RAM
+    0xA6,             // normal display
+    // 0xAF,          // Display ON (можеш тримати вимкнено: у тебе є esp_lcd_panel_disp_on_off(true))
+    0xFF              // END
 };
 
+/*
+static const uint8_t vendor_specific_init[] = {
+    // SH1106 recommended power-on init (per datasheet)
+    0xAE,                   // Display OFF
+    0xD5, 0x80,             // Display clock divide ratio/oscillator frequency (POR)
+    0xA8, 0x3F,             // Multiplex ratio: 1/64
+    0xD3, 0x00,             // Display offset: 0
+    0x40,                   // Start line: 0
+    0x8D, 0x14,             // Charge pump setting (from SSD1306)
+    0xDA, 0x12,             // Common pads hardware config: alternative (POR)
+    0x81, 0x7F,             // Contrast control
+    0xD9, 0x22,             // Pre-charge period
+    0xDB, 0x35,             // VCOM deselect level
+    0xA4,                   // Entire display ON follows RAM
+    0xA6,                   // Normal display (A7 = inverse)
+    // 0xAF,                   // Display ON
+    0xFF,                   // END
+};
+*/
+/*
 static esp_err_t panel_sh1106_init(esp_lcd_panel_t *panel)
 {
     sh1106_panel_t *sh1106 = __containerof(panel, sh1106_panel_t, base);
     esp_lcd_panel_io_handle_t io = sh1106->io;
-
-    // vendor specific initialization, it can be different between manufacturers
-    // should consult the LCD supplier for initialization sequence code
+    ESP_LOGI(TAG, "Initializing SH1106 panel...");
     int cmd = 0;
     while (vendor_specific_init[cmd] != 0xff) {
-        esp_lcd_panel_io_tx_param(io, LCD_SH1106_I2C_CMD, (uint8_t[]) {
+        esp_err_t ret = esp_lcd_panel_io_tx_param(io, LCD_SH1106_I2C_CMD, (uint8_t[]) {
             vendor_specific_init[cmd]
         }, 1);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to send init command 0x%02X: %s", vendor_specific_init[cmd], esp_err_to_name(ret));
+            return ret;
+        }
         cmd++;
     }
-
+    ESP_LOGI(TAG, "SH1106 panel initialized successfully");
     return ESP_OK;
 }
+*/
+
+static int cmd_param_len(uint8_t cmd) {
+    switch (cmd) {
+        case 0xD5: case 0xA8: case 0xD3:
+        case 0x8D: case 0x20: case 0xDA:
+        case 0x81: case 0xD9: case 0xDB:
+            return 1; // ці команди мають 1 параметр
+        default:
+            return 0; // інші без параметрів
+    }
+}
+
+static esp_err_t panel_sh1106_init(esp_lcd_panel_t *panel)
+{
+    sh1106_panel_t *sh = __containerof(panel, sh1106_panel_t, base);
+    esp_lcd_panel_io_handle_t io = sh->io;
+
+    const uint8_t *p = vendor_specific_init;
+    while (*p != 0xFF) {
+        int n = cmd_param_len(*p);
+        ESP_RETURN_ON_ERROR(
+            esp_lcd_panel_io_tx_param(io, 0x00 /*CMD*/, (uint8_t*)p, n + 1),
+            TAG, "init tx"
+        );
+        p += (n + 1);
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
+
+    ESP_LOGI(TAG, "Init done (SSD1306-style + page mode)");
+    return ESP_OK;
+}
+
 
 static esp_err_t panel_sh1106_draw_bitmap(esp_lcd_panel_t *panel, int x_start, int y_start, int x_end, int y_end, const void *color_data)
 {

@@ -11,36 +11,43 @@
 static const char *TAG = "LVGL_UI";
 
 /* Global labels for sensor data - accessible from other files */
-static lv_obj_t *temp_label = NULL;
-static lv_obj_t *humidity_label = NULL;
+/* SH1106 display labels */
+static lv_obj_t *temp_label_sh1106 = NULL;
+static lv_obj_t *humidity_label_sh1106 = NULL;
+static lv_obj_t *emoji_canvas_sh1106 = NULL;
+
+/* SH1107 display labels */
+static lv_obj_t *temp_label_sh1107 = NULL;
+static lv_obj_t *humidity_label_sh1107 = NULL;
+
 static lv_obj_t *pressure_label = NULL;
-static lv_obj_t *emoji_canvas = NULL;
 /* Aligned, palette-capable draw buffer for a 32x32, 1bpp canvas */
-LV_DRAW_BUF_DEFINE_STATIC(smiley_buf, 32, 32, LV_COLOR_FORMAT_I1);
+LV_DRAW_BUF_DEFINE_STATIC(smiley_buf_sh1106, 32, 32, LV_COLOR_FORMAT_I1);
+// LV_DRAW_BUF_DEFINE_STATIC(smiley_buf_sh1107, 32, 32, LV_COLOR_FORMAT_I1);
 
 /* Draw a simple monochrome smiley on a small canvas (works on 1-bit SH1107) */
-static void draw_smiley_on_canvas(lv_obj_t *parent, int x, int y)
+static void draw_smiley_on_canvas(lv_obj_t *parent, int x, int y, lv_obj_t **canvas_ref, void *draw_buf)
 {
     const int W = 32;
     const int H = 32;
 
-    emoji_canvas = lv_canvas_create(parent);
-    lv_obj_set_pos(emoji_canvas, x, y);
-    lv_obj_set_size(emoji_canvas, W, H);
+    *canvas_ref = lv_canvas_create(parent);
+    lv_obj_set_pos(*canvas_ref, x, y);
+    lv_obj_set_size(*canvas_ref, W, H);
     /* Initialize and attach aligned draw buffer */
-    LV_DRAW_BUF_INIT_STATIC(smiley_buf);
-    lv_canvas_set_draw_buf(emoji_canvas, &smiley_buf);
+    lv_canvas_set_draw_buf(*canvas_ref, (lv_draw_buf_t *)draw_buf);
 
     /* Set palette for 1-bit: index0=BLACK, index1=WHITE */
-    lv_canvas_set_palette(emoji_canvas, 0, lv_color32_make(0, 0, 0, 255));
-    lv_canvas_set_palette(emoji_canvas, 1, lv_color32_make(255, 255, 255, 255));
+    lv_canvas_set_palette(*canvas_ref, 0, lv_color32_make(0, 0, 0, 255));
+    lv_canvas_set_palette(*canvas_ref, 1, lv_color32_make(255, 255, 255, 255));
 
     /* Fill background (choose white to contrast with inverted panels) */
-    lv_canvas_fill_bg(emoji_canvas, lv_color_white(), LV_OPA_COVER);
+    /* Fill background (choose white to contrast with inverted panels) */
+    lv_canvas_fill_bg(*canvas_ref, lv_color_white(), LV_OPA_COVER);
 
     /* Initialize a draw layer to use lv_draw_* APIs */
     lv_layer_t layer;
-    lv_canvas_init_layer(emoji_canvas, &layer);
+    lv_canvas_init_layer(*canvas_ref, &layer);
 
     /* Face: filled circle via a full rect with radius=half size */
     lv_draw_rect_dsc_t face_dsc;
@@ -78,10 +85,65 @@ static void draw_smiley_on_canvas(lv_obj_t *parent, int x, int y)
     lv_draw_arc(&layer, &mouth_dsc);
 
     /* Finalize drawing */
-    lv_canvas_finish_layer(emoji_canvas, &layer);
+    lv_canvas_finish_layer(*canvas_ref, &layer);
 }
 
-void example_lvgl_demo_ui(lv_disp_t *disp)
+void lvgl_ui_sh1106(lv_disp_t *disp)
+{
+    /* Initialize draw buffer for SH1106 canvas */
+    LV_DRAW_BUF_INIT_STATIC(smiley_buf_sh1106);
+    
+    lv_obj_t *scr = lv_disp_get_scr_act(disp);
+    
+    /* Remove all padding and margins from screen */
+    lv_obj_set_style_pad_all(scr, 0, LV_PART_MAIN);
+    lv_obj_set_style_margin_all(scr, 0, LV_PART_MAIN);
+    lv_obj_set_style_border_width(scr, 0, LV_PART_MAIN);
+    
+    /* Centered container for Sensor/Temp/Hum */
+    lv_obj_t *panel = lv_obj_create(scr);
+    lv_obj_set_size(panel, 128, LV_SIZE_CONTENT);
+    lv_obj_set_style_border_width(panel, 0, 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_pad_all(panel, 0, 0);
+    lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(panel, 6, 0);
+    lv_obj_center(panel);
+
+    /* Sensor label */
+    lv_obj_t *sensor_label = lv_label_create(panel);
+    lv_label_set_text(sensor_label, "Sensor: SHT41");
+    lv_obj_set_width(sensor_label, 128);
+    lv_obj_set_style_text_align(sensor_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(sensor_label, &lv_font_jb_14, 0);
+    
+    /* Temperature label */
+    temp_label_sh1106 = lv_label_create(panel);
+    lv_label_set_text(temp_label_sh1106, "Temp: --.-°C");
+    lv_obj_set_width(temp_label_sh1106, 128);
+    lv_obj_set_style_text_align(temp_label_sh1106, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(temp_label_sh1106, &lv_font_jb_14, 0);
+    
+    /* Humidity label */
+    humidity_label_sh1106 = lv_label_create(panel);
+    lv_label_set_text(humidity_label_sh1106, "Hum: --.-%");
+    lv_obj_set_width(humidity_label_sh1106, 128);
+    lv_obj_set_style_text_align(humidity_label_sh1106, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(humidity_label_sh1106, &lv_font_jb_14, 0);
+
+    
+    /* Remove padding from labels */
+    lv_obj_set_style_pad_all(temp_label_sh1106, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(humidity_label_sh1106, 0, LV_PART_MAIN);
+    // lv_obj_set_style_pad_all(pressure_label, 0, LV_PART_MAIN);
+    
+    /* Add a 32x32 smiley in the top-right corner */
+    draw_smiley_on_canvas(scr, 96, 0, &emoji_canvas_sh1106, &smiley_buf_sh1106);
+
+    ESP_LOGI(TAG, "Created sensor data display interface");
+}
+
+void lvgl_ui_sh1107(lv_disp_t *disp)
 {
     lv_obj_t *scr = lv_disp_get_scr_act(disp);
     
@@ -108,46 +170,51 @@ void example_lvgl_demo_ui(lv_disp_t *disp)
     lv_obj_set_style_text_font(sensor_label, &lv_font_jb_14, 0);
     
     /* Temperature label */
-    temp_label = lv_label_create(panel);
-    lv_label_set_text(temp_label, "Temp: --.-°C");
-    lv_obj_set_width(temp_label, 128);
-    lv_obj_set_style_text_align(temp_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_font(temp_label, &lv_font_jb_14, 0);
+    temp_label_sh1107 = lv_label_create(panel);
+    lv_label_set_text(temp_label_sh1107, "Temp: --.-°C");
+    lv_obj_set_width(temp_label_sh1107, 128);
+    lv_obj_set_style_text_align(temp_label_sh1107, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(temp_label_sh1107, &lv_font_jb_14, 0);
     
     /* Humidity label */
-    humidity_label = lv_label_create(panel);
-    lv_label_set_text(humidity_label, "Hum: --.-%");
-    lv_obj_set_width(humidity_label, 128);
-    lv_obj_set_style_text_align(humidity_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_font(humidity_label, &lv_font_jb_14, 0);
+    humidity_label_sh1107 = lv_label_create(panel);
+    lv_label_set_text(humidity_label_sh1107, "Hum: --.-%");
+    lv_obj_set_width(humidity_label_sh1107, 128);
+    lv_obj_set_style_text_align(humidity_label_sh1107, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(humidity_label_sh1107, &lv_font_jb_14, 0);
 
     
     /* Remove padding from labels */
-    lv_obj_set_style_pad_all(temp_label, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(humidity_label, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(temp_label_sh1107, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(humidity_label_sh1107, 0, LV_PART_MAIN);
     // lv_obj_set_style_pad_all(pressure_label, 0, LV_PART_MAIN);
-    
-    /* Add a 32x32 smiley in the top-right corner */
-    draw_smiley_on_canvas(scr, 96, 0);
 
     ESP_LOGI(TAG, "Created sensor data display interface");
 }
 
-/* Function to update temperature display */
+/* Function to update temperature display - updates BOTH displays */
 void update_temperature_display(float temperature)
 {
-    if (temp_label != NULL) {
-        lv_label_set_text_fmt(temp_label, "Temp: %.1f°C", temperature);
+    if (temp_label_sh1106 != NULL) {
+        lv_label_set_text_fmt(temp_label_sh1106, "Temp: %.1f°C", temperature);
+    }
+    if (temp_label_sh1107 != NULL) {
+        lv_label_set_text_fmt(temp_label_sh1107, "Temp: %.1f°C", temperature);
     }
 }
 
-/* Function to update humidity display */
+/* Function to update humidity display - updates BOTH displays */
 void update_humidity_display(float humidity)
 {
-    if (humidity_label != NULL) {
+    if (humidity_label_sh1106 != NULL) {
         char hum_str[32];
         snprintf(hum_str, sizeof(hum_str), "Hum: %.1f%%", humidity);
-        lv_label_set_text(humidity_label, hum_str);
+        lv_label_set_text(humidity_label_sh1106, hum_str);
+    }
+    if (humidity_label_sh1107 != NULL) {
+        char hum_str[32];
+        snprintf(hum_str, sizeof(hum_str), "Hum: %.1f%%", humidity);
+        lv_label_set_text(humidity_label_sh1107, hum_str);
     }
 }
 

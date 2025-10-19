@@ -17,6 +17,7 @@
 #include "include/main.h"
 #include "sht41.h"
 #include "bme680.h"
+#include "sdspi.h"
 
 static const char *TAG = "example";
 
@@ -97,8 +98,12 @@ void app_main(void)
 
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(sh1106_panel_handle, true));
 
-    ESP_LOGI(TAG, "Initialize BME680");
+    // ESP_LOGI(TAG, "Initialize BME680");
     // ESP_ERROR_CHECK(init_handle_bme680(&bme680_dev_handle, i2c_bus_1, BME680_I2C_ADDR, I2C_CLK_HZ));
+    
+    // SD Card initialization with diagnostics
+    ESP_LOGI(TAG, "Initialize SD Card");
+    mount_sd_over_spi();
 
     // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xAE}, 1); // Display off
     // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x8D}, 1); // Charge pump

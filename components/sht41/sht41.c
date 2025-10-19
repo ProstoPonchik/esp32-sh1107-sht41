@@ -64,7 +64,19 @@ esp_err_t sht41_soft_reset(i2c_master_dev_handle_t sht41_dev_handle) {
 
 // Читання температури/вологості (висока точність), повертає t_C
 esp_err_t sht41_tmp_hmd_read(float *t_c, float *rh, i2c_master_dev_handle_t sht41_dev_handle) {
-    // Команда вимірювання з високою точністю без нагрівача: 0xFD
+    /*
+    0xFD - measure T & RH with high precision (high repeatability)
+    0xF6 - measure T & RH with medium precision (medium repeatability)
+    0xE0 - measure T & RH with lowest precision (low repeatability)
+    0x89 - read serial number
+    0x94 - soft reset
+    0x39 - activate heater with 200mW for 1s, including a high precision measurement just before deactivation
+    0x32 - activate heater with 200mW for 0.1s including a high precision measurement just before deactivation
+    0x2F - activate heater with 110mW for 1s including a high precision measurement just before deactivation
+    0x24 - activate heater with 110mW for 0.1s including a high precision measurement just before deactivation
+    0x1E - activate heater with 20mW for 1s including a high precision measurement just before deactivation
+    0x15 - activate heater with 20mW for 0.1s including a high precision measurement just before deactivation
+    */
     uint8_t cmd = 0xFD;
     ESP_RETURN_ON_ERROR(i2c_master_transmit(sht41_dev_handle, &cmd, sizeof(cmd), pdMS_TO_TICKS(portMAX_DELAY)), TAG, "tx cmd start measurement failed");
 

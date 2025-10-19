@@ -36,8 +36,6 @@
 #define LED_PIN_4               (gpio_num_t)GPIO_NUM_37
 #define LED_PIN_5               (gpio_num_t)GPIO_NUM_36
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif

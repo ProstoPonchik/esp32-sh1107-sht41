@@ -2,7 +2,6 @@
  * Size: 14 px
  * Bpp: 1
  * Opts: --bpp 1 --size 14 --no-compress --stride 1 --align 1 --font JetBrainsMono-Medium.ttf --symbols °℃µΩ --range 32-127,1024-1279 --format lvgl -o lv_font_jb_14.c
- * Path for inserting: managed_components/lvgl__lvgl/src/font/lv_font_jb_14.c
  ******************************************************************************/
 
 #ifdef __has_include
@@ -13,7 +12,7 @@
     #endif
 #endif
 
-#include "../../lvgl.h"
+#include "lvgl.h"
 
 
 #ifndef LV_FONT_JB_14

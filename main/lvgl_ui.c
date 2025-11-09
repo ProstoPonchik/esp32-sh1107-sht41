@@ -8,6 +8,9 @@
 #include "esp_log.h"
 #include "stdio.h"
 
+/* Declare custom font */
+LV_FONT_DECLARE(lv_font_jb_14);
+
 static const char *TAG = "LVGL_UI";
 
 /* Global labels for sensor data - accessible from other files */

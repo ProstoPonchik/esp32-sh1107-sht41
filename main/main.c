@@ -105,24 +105,6 @@ void app_main(void)
     ESP_LOGI(TAG, "Initialize SD Card");
     mount_sd_over_spi();
 
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xAE}, 1); // Display off
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x8D}, 1); // Charge pump
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x14}, 1); // Enable
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xA8}, 1); // Multiplex
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x3F}, 1); // 64 lines
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xD3}, 1); // Display offset
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x00}, 1); // No offset
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x40}, 1); // Start line 0
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xA1}, 1); // Segment remap
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xC8}, 1); // COM scan
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xDA}, 1); // COM pins
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x12}, 1); // Alt COM
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0x81}, 1); // Contrast
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xFF}, 1); // MAX
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xA4}, 1); // Resume RAM
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xA6}, 1); // Normal display
-    // esp_lcd_panel_io_tx_param(sh1106_io_handle, 0x00, (uint8_t[]){0xAF}, 1); // Display ON
-
     vTaskDelay(pdMS_TO_TICKS(100));
 
 
@@ -173,16 +155,6 @@ void app_main(void)
         lv_disp_set_rotation(disp2, LV_DISPLAY_ROTATION_180);
         lvgl_ui_sh1107(disp2);
         
-        // // ФОРСУЄМО обертання після LVGL ініціалізації
-        // ESP_LOGI(TAG, "Forcing SSD1306 orientation after LVGL...");
-
-        // lv_obj_t *label2 = lv_label_create(lv_disp_get_scr_act(disp2));
-        // lv_obj_set_width(label2, 128);
-        // lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
-        // lv_obj_set_style_text_font(label2, &lv_font_jb_14, 0);
-        // lv_label_set_text(label2, "Test Andriy\nWorking!");
-        // lv_obj_center(label2);
-        
         lvgl_port_unlock();
     }
     
@@ -197,25 +169,6 @@ static void sensor_data_task(void *pvParameters)
     float humidity;
 
     while (1) {
-        // gpio_set_level(LED_PIN_1, 1);
-        // vTaskDelay(pdMS_TO_TICKS(300));
-        // gpio_set_level(LED_PIN_1, 0);
-
-        // gpio_set_level(LED_PIN_2, 1);
-        // vTaskDelay(pdMS_TO_TICKS(300));
-        // gpio_set_level(LED_PIN_2, 0);
-
-        // gpio_set_level(LED_PIN_3, 1);
-        // vTaskDelay(pdMS_TO_TICKS(300));
-        // gpio_set_level(LED_PIN_3, 0);
-
-        // gpio_set_level(LED_PIN_4, 1);
-        // vTaskDelay(pdMS_TO_TICKS(300));
-        // gpio_set_level(LED_PIN_4, 0);
-
-        // gpio_set_level(LED_PIN_5, 1);
-        // vTaskDelay(pdMS_TO_TICKS(300));
-        // gpio_set_level(LED_PIN_5, 0);
         /* Better simulation with more realistic behavior */
         sht41_tmp_hmd_read(&temperature, &humidity, sht41_dev_handle);
         
